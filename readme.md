@@ -1,6 +1,14 @@
 ## How to a profile a go profile with pprof library 
 
-The go profile can respond to http requests by sending statistics, while requested via http. That's why you need to add the following to your executable: (starts to listen for external requests for pprof statistics, if environment ```LISTEN_PPROF``` is defined)
+# Profiles
+
+The official documentations [heap profiles](https://pkg.go.dev/runtime/pprof#hdr-Heap_profile-Profile)
+
+Go profiles are collection of stack traces taken from a running go program, that we want to analyze. There are different kinds of go profiles, as will be explained later.
+
+## Enable profile collection
+
+You need to add the following code to your executable:
 
 <code>
 <pre>
@@ -21,10 +29,124 @@ func main() {
 </pre>
 </code>
 
+in more detail:
+
+- Here profiling is enabled, on condition that  `LISTEN_PPROF` environment variable is set 
+- it starts a go routine that starts a web server on port 6060 (http.ListenAndServer). A go routine is running in the background.
+- note that a nil parameter is passed for the function parameter that that would normally get a function for serving of the http request. This means that the default handler [DefaultServeMux](https://pkg.go.dev/net/http#DefaultServeMux) is called
+- important detail: `import _ "net/http/pprof"` includes the `pprof` package - this tells DefaultServeMux how to handle http requests for information.
+
+Lets look at the source code [link](https://cs.opensource.google/go/go/+/refs/tags/go1.25.5:src/net/http/pprof/pprof.go)
+
+- when the package is included, the `init` function it runs. It looks as follows:
+
+<code>
+<pre>
+func init() {
+	prefix := ""
+	if godebug.New("httpmuxgo121").Value() != "1" {
+		prefix = "GET "
+	}
+	http.HandleFunc(prefix+"/debug/pprof/", Index)
+	http.HandleFunc(prefix+"/debug/pprof/cmdline", Cmdline)
+	http.HandleFunc(prefix+"/debug/pprof/profile", Profile)
+	http.HandleFunc(prefix+"/debug/pprof/symbol", Symbol)
+	http.HandleFunc(prefix+"/debug/pprof/trace", Trace)
+}
+</pre>
+</code>
+
+Go profiling is served by `http.HandleFunc(prefix+"/debug/pprof/profile", Profile)`
+
+However the other handlers are interesting too: 
+- `/debug/pprof/cmdline`  (access by curl http://localhost:6060/debug/pprof/cmdliine) gets you the command line parameters of the running process, separated by NULL bytes.
+- pattern `/debug/pprof/`  (access by curl http://localhost:6060/debug/pprof) gives you an html page that lists all available kinds of profiles, with a description, that sometimes rivals that of the official documentation in clarity!
+
+- each profile is the parameter that comes next in the url. The following profiles return information on the current state of what happens at the time of the the http request:
+
+<table>
+  <tr>
+    <td>
+        goroutine
+    </td>
+    <td>    
+        `curl http://localhost:6060/debug/pprof/goroutine`
+    </td>
+    <td> 
+        The stack trace of all running go routines
+    </td>
+  </tr>
+  <tr>
+    <td>
+        mutex
+    </td>
+    <td>    
+        `curl http://localhost:6060/debug/pprof/mutex`
+    </td>
+    <td> 
+        stack trace of go routines that are now holding a mutex / are now waiting on a synchronization primitive
+    </td>
+  </tr>
+</table>
+
+Other profiles return some accumulated information of past events, but you can pass an additional parameter that requests information for events during the past N seconds by passing an additional seconds=N parameter to the URL!
+
+This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threadcreate
+
+<table>
+  <tr>
+    <td>
+        threadcreate
+    </td>
+    <td>    
+        `curl http://localhost:6060/debug/pprof/threadcreate?seconds=3`
+    </td>
+    <td> 
+        The stack trace of go routines that created a goroutine/thread during the last three seconds 
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+        alloc
+    </td>
+    <td>    
+        `curl http://localhost:6060/debug/pprof/alloc?seconds=3`
+    </td>
+    <td> 
+        The stack trace of go routines that performed an allocation during the last three seconds (isn't that all of them?)
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+        heap
+    </td>
+    <td>    
+        `curl http://localhost:6060/debug/pprof/alloc?seconds=3`
+    </td>
+    <td> 
+        subset of alloc, only those threads that produced a currently living objects are counted here.
+    </td>
+  </tr>
+  <tr>
+    <td>
+        block
+    </td>
+    <td>    
+        `curl http://localhost:6060/debug/pprof/block`
+    </td>
+    <td> 
+        `block` profile is a superset of `mutex` - here a all goroutines count that have resulted in a blocking (`mutex` count s those who are currently blocked)
+    </td>
+  </tr>
+</table>
+
+Another common url parameter is `debug=1` - this tells it to return text formated output, which is easier to look at compared to default binary output.
 
 # Gathering 
 
-The folling one line script gathers result into file ```prof.log``` - every second you get a new entry into the file.
+The folling one line script gathers result into file ```prof.log``` - every second you get a new entry into the file. This script uses the `goroutine` profile - which lists all running go routines.
 
 <code>
 <pre>
