@@ -194,3 +194,8 @@ Run the program to create an html file for the call graph. For each node in the 
 Display the resulting html file in a web browser
 
 
+## pprof tool
+
+However most people will use the pprof tool, that works with binary profiles
+
+[explanation of pprof](https://go.dev/blog/pprof)
