@@ -179,7 +179,7 @@ goroutine profile: total 76
 
 ## Tool for displaying a call graph with number of calls for each frame.
 
-In this repository build the program `parseprof.go`
+In this repository build the program `parseprof.go` ([source code link](https://raw.githubusercontent.com/MoserMichael/go_pprof_analyse/refs/heads/main/parseprof.go))
 
 ```
 go build -o parseprof
