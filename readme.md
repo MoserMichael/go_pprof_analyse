@@ -63,6 +63,17 @@ Url parameter is `debug=1` - this tells it to return text formatted output, whic
 
 <table>
   <tr>
+    <th>
+        Profile name
+    </th>
+    <th>
+        Curl command
+    </th>
+    <th>
+        Explanation
+    </th>
+  </tr>
+  <tr>
     <td>
         goroutine
     </td>
@@ -92,6 +103,17 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
 
 <table>
   <tr>
+    <th>
+        Profile name
+    </th>
+    <th>
+        Curl command
+    </th>
+    <th>
+        Explanation
+    </th>
+  </tr>
+  <tr>
     <td>
         threadcreate
     </td>
@@ -111,7 +133,7 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         `curl 'http://localhost:6060/debug/pprof/alloc?seconds=3&debug=1'`
     </td>
     <td> 
-        The stack trace of go routines that performed an allocation during the last three seconds (isn't that all of them?)
+        The stack trace of go routines that performed an allocation during the last three seconds
     </td>
   </tr>
 
@@ -123,7 +145,7 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         `curl 'http://localhost:6060/debug/pprof/alloc?seconds=3&debug=1'`
     </td>
     <td> 
-        subset of alloc, only those threads that produced a currently living objects are counted here.
+        This profile is a subset of alloc. The stack traces of allocations that produced a currently living object during the last three seconds are returned here.
     </td>
   </tr>
   <tr>
@@ -134,7 +156,7 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         `curl 'http://localhost:6060/debug/pprof/block?seconds=3&debug=1'`
     </td>
     <td> 
-        `block` profile is a superset of `mutex` - here a all goroutines count that have resulted in a blocking - for last three seconds
+        `block` profile is a superset of `mutex. The stack traces of of blocking states are returned - for last three seconds
     </td>
   </tr>
 </table>
