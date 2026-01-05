@@ -10,15 +10,13 @@ Go profiles are collection of stack traces taken from a running go program, that
 
 You need to add the following code to your executable:
 
-<code>
-<pre>
+```go
+
 import _ "net/http/pprof"
 import "net/http"
 import "os"
 
-
 func main() {
-
     # need to start this initialization for using prof... 
     if os.getenv("LISTEN_PPROF") != nil {
         go func() {
@@ -26,8 +24,7 @@ func main() {
         }()
     }
 }
-</pre>
-</code>
+```
 
 in more detail:
 
@@ -40,8 +37,7 @@ Lets look at the source code [link](https://cs.opensource.google/go/go/+/refs/ta
 
 - when the package is included, the `init` function it runs. It looks as follows:
 
-<code>
-<pre>
+```go
 func init() {
 	prefix := ""
 	if godebug.New("httpmuxgo121").Value() != "1" {
@@ -53,8 +49,7 @@ func init() {
 	http.HandleFunc(prefix+"/debug/pprof/symbol", Symbol)
 	http.HandleFunc(prefix+"/debug/pprof/trace", Trace)
 }
-</pre>
-</code>
+```
 
 Go profiling is served by `http.HandleFunc(prefix+"/debug/pprof/profile", Profile)`
 
@@ -64,13 +59,15 @@ However the other handlers are interesting too:
 
 - each profile is the parameter that comes next in the url. The following profiles return information on the current state of what happens at the time of the the http request:
 
+Url parameter is `debug=1` - this tells it to return text formatted output, which is easier to look at compared to default binary output.
+
 <table>
   <tr>
     <td>
         goroutine
     </td>
     <td>    
-        `curl http://localhost:6060/debug/pprof/goroutine`
+        `curl 'http://localhost:6060/debug/pprof/goroutine?debug=1'`
     </td>
     <td> 
         The stack trace of all running go routines
@@ -81,7 +78,7 @@ However the other handlers are interesting too:
         mutex
     </td>
     <td>    
-        `curl http://localhost:6060/debug/pprof/mutex`
+        `curl 'http://localhost:6060/debug/pprof/mutex?debug=1'`
     </td>
     <td> 
         stack trace of go routines that are now holding a mutex / are now waiting on a synchronization primitive
@@ -93,13 +90,14 @@ Other profiles return some accumulated information of past events, but you can p
 
 This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threadcreate
 
+
 <table>
   <tr>
     <td>
         threadcreate
     </td>
     <td>    
-        `curl http://localhost:6060/debug/pprof/threadcreate?seconds=3`
+        `curl 'http://localhost:6060/debug/pprof/threadcreate?seconds=3&debug=1'`
     </td>
     <td> 
         The stack trace of go routines that created a goroutine/thread during the last three seconds 
@@ -111,7 +109,7 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         alloc
     </td>
     <td>    
-        `curl http://localhost:6060/debug/pprof/alloc?seconds=3`
+        `curl 'http://localhost:6060/debug/pprof/alloc?seconds=3&debug=1'`
     </td>
     <td> 
         The stack trace of go routines that performed an allocation during the last three seconds (isn't that all of them?)
@@ -123,7 +121,7 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         heap
     </td>
     <td>    
-        `curl http://localhost:6060/debug/pprof/alloc?seconds=3`
+        `curl 'http://localhost:6060/debug/pprof/alloc?seconds=3&debug=1'`
     </td>
     <td> 
         subset of alloc, only those threads that produced a currently living objects are counted here.
@@ -134,19 +132,18 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         block
     </td>
     <td>    
-        `curl http://localhost:6060/debug/pprof/block`
+        `curl 'http://localhost:6060/debug/pprof/block?seconds=3&debug=1'`
     </td>
     <td> 
-        `block` profile is a superset of `mutex` - here a all goroutines count that have resulted in a blocking (`mutex` count s those who are currently blocked)
+        `block` profile is a superset of `mutex` - here a all goroutines count that have resulted in a blocking - for last three seconds
     </td>
   </tr>
 </table>
 
-Another common url parameter is `debug=1` - this tells it to return text formated output, which is easier to look at compared to default binary output.
 
 # Gathering 
 
-The folling one line script gathers result into file ```prof.log``` - every second you get a new entry into the file. This script uses the `goroutine` profile - which lists all running go routines.
+The following one line script gathers result into file ```prof.log``` - every second you get a new entry into the file. This script uses the `goroutine` profile - which lists all running go routines.
 
 <code>
 <pre>
