@@ -54,7 +54,7 @@ func init() {
 Go profiling is served by `http.HandleFunc(prefix+"/debug/pprof/profile", Profile)`
 
 However the other handlers are interesting too: 
-- `/debug/pprof/cmdline`  (access by curl http://localhost:6060/debug/pprof/cmdliine) gets you the command line parameters of the running process, separated by NULL bytes.
+- `/debug/pprof/cmdline`  (access by curl http://localhost:6060/debug/pprof/cmdline) gets you the command line parameters of the running process, separated by NULL bytes.
 - pattern `/debug/pprof/`  (access by curl http://localhost:6060/debug/pprof) gives you an html page that lists all available kinds of profiles, with a description, that sometimes rivals that of the official documentation in clarity!
 
 - each profile is the parameter that comes next in the url. The following profiles return information on the current state of what happens at the time of the the http request:
@@ -89,7 +89,6 @@ Url parameter is `debug=1` - this tells it to return text formatted output, whic
 Other profiles return some accumulated information of past events, but you can pass an additional parameter that requests information for events during the past N seconds by passing an additional seconds=N parameter to the URL!
 
 This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threadcreate
-
 
 <table>
   <tr>
@@ -145,26 +144,28 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
 
 The following one line script gathers result into file ```prof.log``` - every second you get a new entry into the file. This script uses the `goroutine` profile - which lists all running go routines.
 
-<code>
-<pre>
-rm prof.log; while [ true ]; do date | tee -a prof.log; curl http://localhost:6060/debug/pprof/goroutine?debug=1 | tee -a prof.log ; sleep 1s; done
-</pre>
-</code>
+```bash
+rm prof.log; while [ true ]; do date | tee -a prof.log; curl 'http://localhost:6060/debug/pprof/goroutine?debug=1' | tee -a prof.log ; sleep 1s; done
+```
+
+for cumulative profiles (like 'threadcreate') you might want to add the parameter for covering the period of the last second, like
+
+```bash
+rm prof.log; while [ true ]; do date | tee -a prof.log; curl 'http://localhost:6060/debug/pprof/threadcreate?debug=1&seconds=1' | tee -a prof.log ; sleep 1s; done
+```
+
 
 First thing you want to do: see if the number of go routine does not grow without bounds. Leaking go routines is a very bad thing, for performance - and should be fixed as a first priority.
 
 Most simple way as follows:
 
-<code>
-<pre>
+```bash
 grep -B 1 'goroutine profile:' prof.log
-</pre>
-</code>
+```
 
 This gives you something like this:
 
-<code>
-<pre>
+```
 --
 Wed Dec 31 13:49:53 IST 2025
 goroutine profile: total 76
@@ -174,27 +175,21 @@ goroutine profile: total 76
 --
 Wed Dec 31 13:49:55 IST 2025
 goroutine profile: total 76
-</pre>
-</code>
-
+```
 
 ## Tool for displaying a call graph with number of calls for each frame.
 
 In this repository build the program `parseprof.go`
 
-<pre>
-<code>
+```
 go build -o parseprof
-</code>
-</pre>
+```
 
-Run the program to create an html file for the call graph
+Run the program to create an html file for the call graph. For each node in the call graph: the children of the node are sorted by number of occurrences of the child node.
 
-<pre>
-<code>
+```
 ./parseprof -in prof.log -out prof.html
-</code>
-</pre>
+```
 
 Display the resulting html file in a web browser
 
