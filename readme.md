@@ -59,7 +59,7 @@ However the other handlers are interesting too:
 
 - each profile is the parameter that comes next in the url. The following profiles return information on the current state of what happens at the time of the the http request:
 
-Url parameter is `debug=1` - this tells it to return text formatted output, which is easier to look at compared to default binary output.
+Url parameter is `debug=1` - this tells it to return text formatted output, which is easier to look at compared to default binary output. (the binary format is useful for a tool called ```pprof```)
 
 <table>
   <tr>
@@ -99,7 +99,7 @@ Url parameter is `debug=1` - this tells it to return text formatted output, whic
 
 Other profiles return some accumulated information of past events, but you can pass an additional parameter that requests information for events during the past N seconds by passing an additional seconds=N parameter to the URL!
 
-This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threadcreate
+This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threadcreate (these profiles are also called cumulative profiles)
 
 <table>
   <tr>
@@ -156,7 +156,7 @@ This seconds=N parameter works for: allocs, block, goroutine, heap, mutex, threa
         `curl 'http://localhost:6060/debug/pprof/block?seconds=3&debug=1'`
     </td>
     <td> 
-        `block` profile is a superset of `mutex. The stack traces of of blocking states are returned - for last three seconds
+        `block` profile is a superset of `mutex. The stack traces of calls that resulted in blocking states are returned - for last three seconds.
     </td>
   </tr>
 </table>
@@ -199,7 +199,7 @@ Wed Dec 31 13:49:55 IST 2025
 goroutine profile: total 76
 ```
 
-## Tool for displaying a call graph with number of calls for each frame.
+## my tool for displaying a call graph with number of calls for each frame.
 
 In this repository build the program `parseprof.go` ([source code link](https://raw.githubusercontent.com/MoserMichael/go_pprof_analyse/refs/heads/main/parseprof.go))
 
@@ -215,9 +215,23 @@ Run the program to create an html file for the call graph. For each node in the 
 
 Display the resulting html file in a web browser
 
+## using pprof instead
 
-## pprof tool
+You can use a standard tool, instead of gathering profile responses.
 
-However most people will use the pprof tool, that works with binary profiles
+The following will display the top N functions that did a memory allocation
+
+```
+go tool pprof -top http://localhost:6060/debug/pprof/heap.
+```
+
+
+## Binary pprof profiles
+
+Instead of gathering data from a running server: you can gather the events between the calls to ```pprof.StartCPUProfil``` and ```pprof.StopCPUProfle``` and look at the results with ```pprof``` 
+
+This is explained in great detail here:
 
 [explanation of pprof](https://go.dev/blog/pprof)
+
+Also Julia Evans wrote an [interesting explanation of pprof](https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/) - as I found out lately.
