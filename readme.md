@@ -1,5 +1,7 @@
 ## How to a profile a go profile with pprof library 
 
+The focus of this document is profiling/problem solving of a running server.
+
 # Profiles
 
 The official documentations [heap profiles](https://pkg.go.dev/runtime/pprof#hdr-Heap_profile-Profile)
@@ -228,9 +230,9 @@ go tool pprof -top http://localhost:6060/debug/pprof/heap.
 
 ## Binary pprof profiles
 
-Instead of gathering data from a running server: you can gather the events between the calls to ```pprof.StartCPUProfil``` and ```pprof.StopCPUProfle``` and look at the results with ```pprof``` 
+Instead of gathering data from a running server: you can gather the events between the calls to ```pprof.StartCPUProfile``` and ```pprof.StopCPUProfile``` and look at the resulting file with ```pprof``` (this is great for looking at isolated problems, in unit tests or batch processes) 
 
-This is explained in great detail here:
+How to do that is explained in great detail here:
 
 [explanation of pprof](https://go.dev/blog/pprof)
 
