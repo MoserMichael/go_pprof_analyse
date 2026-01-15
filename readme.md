@@ -20,7 +20,7 @@ import "os"
 
 func main() {
     // need to start this initialization for using prof... 
-    if os.getenv("LISTEN_PPROF") != nil {
+    if os.Getenv("LISTEN_PPROF") != "" {
         go func() {
             http.ListenAndServe("localhost:6060", nil)
         }()
